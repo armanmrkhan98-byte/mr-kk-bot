@@ -1,0 +1,368 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pocket Option Precision AI Signal Engine v7.0</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#030712',
+                        cardBg: 'rgba(11, 18, 33, 0.85)',
+                        neonCyan: '#00f3ff',
+                        neonGreen: '#00ff66',
+                        neonRed: '#ff2a5f',
+                        neonPurple: '#a855f7',
+                        neonYellow: '#eab308'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tech: ['Orbitron', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon-cyan': '0 0 25px rgba(0, 243, 255, 0.4)',
+                        'neon-green': '0 0 35px rgba(0, 255, 102, 0.55)',
+                        'neon-red': '0 0 35px rgba(255, 42, 95, 0.55)',
+                        'neon-yellow': '0 0 35px rgba(234, 179, 8, 0.55)',
+                        'inner-glow': 'inset 0 0 15px rgba(255, 255, 255, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #030712;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 243, 255, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.12) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(0, 255, 102, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .glass-card {
+            background: rgba(11, 18, 33, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 243, 255, 0.22);
+        }
+
+        .glass-card-inner {
+            background: rgba(6, 11, 23, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        @keyframes pulseGlowRed {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 42, 95, 0.5), inset 0 0 15px rgba(255, 42, 95, 0.25); }
+            50% { box-shadow: 0 0 45px rgba(255, 42, 95, 0.9), inset 0 0 25px rgba(255, 42, 95, 0.5); }
+        }
+
+        @keyframes pulseGlowGreen {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 102, 0.5), inset 0 0 15px rgba(0, 255, 102, 0.25); }
+            50% { box-shadow: 0 0 45px rgba(0, 255, 102, 0.9), inset 0 0 25px rgba(0, 255, 102, 0.5); }
+        }
+
+        @keyframes pulseGlowYellow {
+            0%, 100% { box-shadow: 0 0 20px rgba(234, 179, 8, 0.5), inset 0 0 15px rgba(234, 179, 8, 0.25); }
+            50% { box-shadow: 0 0 45px rgba(234, 179, 8, 0.9), inset 0 0 25px rgba(234, 179, 8, 0.5); }
+        }
+
+        .glow-sell { animation: pulseGlowRed 1.8s infinite; }
+        .glow-buy { animation: pulseGlowGreen 1.8s infinite; }
+        .glow-hold { animation: pulseGlowYellow 1.8s infinite; }
+
+        .scanline {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 243, 255, 0.02) 51%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(11, 18, 33, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.4);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen font-sans pb-10 flex flex-col items-center justify-start relative overflow-x-hidden">
+
+    <div class="scanline"></div>
+
+    <!-- Header -->
+    <header class="w-full max-w-md px-4 py-3 flex justify-between items-center border-b border-cyan-500/20 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50">
+        <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-neonCyan flex items-center justify-center text-neonCyan shadow-neon-cyan">
+                <i class="fa-solid fa-microchip text-base"></i>
+            </div>
+            <div>
+                <h1 class="font-tech font-black text-sm tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-neonCyan via-cyan-300 to-neonGreen">
+                    NAJIIP 10S/5S BOT
+                </h1>
+                <p class="text-[9px] text-slate-400 flex items-center gap-1 font-mono">
+                    <span class="w-1.5 h-1.5 rounded-full bg-neonGreen inline-block animate-ping"></span> Candle Close Analyzer
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button id="soundToggleBtn" onclick="toggleAudio()" class="w-8 h-8 rounded-lg bg-slate-900 border border-cyan-500/30 text-neonCyan flex items-center justify-center text-xs hover:bg-slate-800 transition">
+                <i id="soundIcon" class="fa-solid fa-volume-high"></i>
+            </button>
+            <span class="px-2.5 py-1 rounded-full bg-cyan-950/80 border border-neonCyan/50 text-[10px] font-mono text-neonCyan font-bold tracking-wider shadow-inner">
+                v7.0 PRECISION
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-md px-4 pt-4 flex flex-col gap-4 z-20">
+
+        <!-- Main Bot Interface Card -->
+        <div class="glass-card rounded-2xl p-5 relative overflow-hidden shadow-2xl border border-cyan-500/30 flex flex-col gap-4">
+            
+            <!-- Category & Pair Selectors -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] uppercase font-tech text-cyan-400/90 tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-layer-group text-[9px]"></i> Market Type
+                    </label>
+                    <div class="relative">
+                        <select id="categorySelect" onchange="onCategoryChange()" class="w-full bg-slate-900/95 border border-cyan-500/30 text-slate-100 text-xs rounded-xl px-3 py-2.5 outline-none focus:border-neonCyan focus:ring-1 focus:ring-neonCyan appearance-none font-semibold cursor-pointer">
+                            <option value="OTC_FX" selected>OTC Forex Pairs</option>
+                            <option value="LIVE_FX">Live FX Pairs</option>
+                            <option value="COMMODITIES">Commodities OTC</option>
+                            <option value="CRYPTO">Crypto OTC</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-[10px] text-cyan-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] uppercase font-tech text-cyan-400/90 tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-coins text-[9px]"></i> Currency Pair
+                    </label>
+                    <div class="relative">
+                        <select id="assetSelect" onchange="onAssetChange()" class="w-full bg-slate-900/95 border border-cyan-500/30 text-slate-100 text-xs rounded-xl px-3 py-2.5 outline-none focus:border-neonCyan focus:ring-1 focus:ring-neonCyan appearance-none font-semibold cursor-pointer">
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-[10px] text-cyan-400 pointer-events-none"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeframe & Payout Row -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] uppercase font-tech text-cyan-400/90 tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-clock text-[9px]"></i> Time Frame
+                    </label>
+                    <div class="relative">
+                        <select id="timeframeSelect" onchange="onTimeframeChange()" class="w-full bg-slate-900/95 border border-cyan-500/30 text-slate-100 text-xs rounded-xl px-3 py-2.5 outline-none focus:border-neonCyan focus:ring-1 focus:ring-neonCyan appearance-none font-semibold cursor-pointer">
+                            <option value="15" selected>15 SECONDS</option>
+                            <option value="30">30 SECONDS</option>
+                            <option value="60">1 MINUTE</option>
+                            <option value="300">5 MINUTES</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-[10px] text-cyan-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] uppercase font-tech text-cyan-400/90 tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-percent text-[9px]"></i> Profit Payout
+                    </label>
+                    <div class="bg-slate-900/95 border border-cyan-500/30 rounded-xl px-3 py-2 flex items-center justify-between text-xs font-mono font-bold text-neonGreen">
+                        <span>PAYOUT:</span>
+                        <span id="payoutRate">92%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candlestick Chart -->
+            <div class="relative w-full h-36 rounded-xl bg-slate-950 border border-cyan-500/20 overflow-hidden flex flex-col justify-between p-2">
+                <div class="flex justify-between items-center z-10 text-[10px] font-mono">
+                    <span class="text-slate-400 flex items-center gap-1">
+                        <span id="priceDot" class="w-2 h-2 rounded-full bg-neonGreen animate-pulse"></span>
+                        Live Price: <strong id="livePrice" class="text-neonCyan text-xs font-mono">0.65482</strong>
+                    </span>
+                    <span id="candleCloseBadge" class="text-neonYellow font-bold px-2 py-0.5 rounded bg-yellow-500/10 border border-yellow-500/30">
+                        CANDLE REMAINING: 15s
+                    </span>
+                </div>
+                <canvas id="liveChartCanvas" class="absolute inset-0 w-full h-full"></canvas>
+            </div>
+
+            <!-- Accuracy & Quality Metrics -->
+            <div class="flex justify-between items-end border-b border-cyan-500/20 pb-2">
+                <div>
+                    <p class="text-[11px] text-slate-400 font-medium">Confidence Score</p>
+                    <p id="accuracyText" class="font-tech text-2xl font-black text-neonGreen tracking-tight">96%</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-400">Analysis Mode</p>
+                    <p id="analysisMode" class="text-xs font-bold text-neonCyan font-mono">5s/10s PRE-CLOSE SCAN</p>
+                </div>
+            </div>
+
+            <!-- Signal Badge -->
+            <div class="flex flex-col items-center justify-center py-2 relative">
+                <p class="text-[11px] font-tech text-slate-400 tracking-widest uppercase mb-2">Signal Direction</p>
+                
+                <div id="signalBadge" onclick="generateNewSignal()" class="w-28 h-28 rounded-full border-4 border-neonRed flex items-center justify-center bg-slate-950/90 glow-sell transition-all duration-500 cursor-pointer shadow-neon-red">
+                    <i id="signalIcon" class="fa-solid fa-arrow-down text-5xl text-neonRed transform transition-transform duration-300"></i>
+                </div>
+
+                <p id="signalText" class="font-tech text-3xl font-black text-neonRed tracking-widest mt-2 uppercase drop-shadow">
+                    SELL
+                </p>
+
+                <!-- Precise Countdown Timer Bar -->
+                <div class="w-full mt-3 flex flex-col gap-1">
+                    <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                        <span class="flex items-center gap-1">
+                            <i class="fa-regular fa-hourglass-half text-neonCyan"></i>
+                            Candle Close Timer:
+                        </span>
+                        <span id="countdownText" class="text-neonCyan font-bold">15 SECONDS</span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800 relative">
+                        <div id="countdownBar" class="bg-gradient-to-r from-neonCyan via-cyan-400 to-neonGreen h-full w-full transition-all duration-100"></div>
+                        <!-- 10s and 5s markers -->
+                        <div class="absolute right-[33%] top-0 bottom-0 w-0.5 bg-yellow-500/50" title="10s Trigger Zone"></div>
+                        <div class="absolute right-[16%] top-0 bottom-0 w-0.5 bg-rose-500/60" title="5s Trigger Zone"></div>
+                    </div>
+                    <div class="flex justify-between text-[9px] text-slate-500 font-mono px-0.5">
+                        <span>Candle Start</span>
+                        <span class="text-yellow-400 font-semibold">10s Scan Zone</span>
+                        <span class="text-rose-400 font-semibold">5s Execution</span>
+                        <span>Close</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signal Analysis Details Card -->
+            <div class="glass-card-inner rounded-xl p-4 border border-cyan-500/25 text-center relative overflow-hidden">
+                <div class="flex items-center justify-center gap-2 mb-2 text-neonCyan font-tech text-xs tracking-wider">
+                    <i class="fa-solid fa-microchip"></i> Multi-Indicator Confluence Matrix
+                </div>
+                <p id="analysisDescription" class="text-[11px] leading-relaxed text-slate-300 font-light">
+                    Analyzed at last 10s candle close window. RSI (78.4), MACD bearish cross, and rejection wick detected at resistance.
+                </p>
+                <div class="mt-3 pt-2.5 border-t border-slate-800/80 text-[10px] font-medium text-cyan-300/90 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-shield-halved text-neonGreen"></i>
+                    <span>Position sizing: <strong id="riskPercent" class="text-neonGreen">3%</strong> balance per entry.</span>
+                </div>
+            </div>
+
+            <!-- ANALYZE MARKET Button -->
+            <button id="getSignalBtn" onclick="generateNewSignal()" class="w-full py-3.5 rounded-xl font-tech font-black text-slate-950 text-sm bg-gradient-to-r from-neonCyan via-cyan-400 to-neonGreen hover:opacity-95 active:scale-[0.98] transition-all shadow-neon-cyan flex items-center justify-center gap-2">
+                <i class="fa-solid fa-bolt text-slate-950"></i> ANALYZE MARKET NOW
+            </button>
+
+        </div>
+
+        <!-- Technical Indicators Monitor Matrix -->
+        <div class="glass-card rounded-2xl p-4 border border-cyan-500/20">
+            <h3 class="font-tech text-xs text-slate-300 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-chart-diagram text-neonCyan"></i> REALTIME TECHNICAL METRICS
+            </h3>
+            <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80 flex justify-between">
+                    <span class="text-slate-400">RSI (14):</span>
+                    <span id="indRsi" class="text-neonRed font-bold">78.4 (OB)</span>
+                </div>
+                <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80 flex justify-between">
+                    <span class="text-slate-400">MACD:</span>
+                    <span id="indMacd" class="text-neonRed font-bold">Bearish Cross</span>
+                </div>
+                <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80 flex justify-between">
+                    <span class="text-slate-400">EMA Trend:</span>
+                    <span id="indEma" class="text-neonRed font-bold">Downtrend</span>
+                </div>
+                <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80 flex justify-between">
+                    <span class="text-slate-400">Candle Wick:</span>
+                    <span id="indWick" class="text-neonRed font-bold">Upper Rejection</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signal History Log -->
+        <div class="glass-card rounded-2xl p-4 border border-cyan-500/20 mb-6">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-tech text-xs text-slate-300 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-neonPurple"></i> SIGNAL HISTORY LOG
+                </h3>
+                <span class="text-[10px] text-slate-400 font-mono">Realtime Log</span>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-[11px] font-mono">
+                    <thead>
+                        <tr class="text-slate-400 border-b border-slate-800 text-[10px] uppercase">
+                            <th class="pb-2">Time</th>
+                            <th class="pb-2">Asset</th>
+                            <th class="pb-2">Signal</th>
+                            <th class="pb-2 text-right">Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody id="signalLogTable" class="divide-y divide-slate-800/50 text-slate-300">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-[10px] text-slate-500 font-mono z-20 px-4">
+        Pocket Option AI Engine &copy; 2026. Optimized for 10s/5s Candle Close Execution.
+    </footer>
+
+    <!-- Audio & Logic Engine -->
+    <script>
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if(!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            if(soundEnabled) {
+                icon.className = "fa-solid fa-volume-high text-neonCyan";
+            } else {
+                icon.className = "fa-solid fa-volume-xmark text-slate-500";
+            }
+        }
+
+        function playBeep(freq = 600, type = 'sine', duration = 0.15) {
+            if(!soundEnabled) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValue
